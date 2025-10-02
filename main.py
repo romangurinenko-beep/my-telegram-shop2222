@@ -37,8 +37,7 @@ bot = Bot(token=BOT_TOKEN)
 # Встановлюємо FSMStrategy.CHAT, щоб стани були окремими для кожного чату
 dp = Dispatcher(fsm_strategy=FSMStrategy.CHAT)
 
-WEB_SERVER_HOST = "https://your-app-name.onrender.com" # Ви отримаєте це посилання на Render
-WEB_SERVER_PORT = 8080 # Render використовує цей порт
+
 
 
 # --- БЛОК 3: ДАНІ (ТОВАРИ, ТЕКСТИ) ---
