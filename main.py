@@ -9,7 +9,12 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile
+from aiogram.fsm.strategy import FSMStrategy  # <-- ОСЬ ЦЕЙ РЯДОК
+from aiogram.types import (
+    ReplyKeyboardMarkup, KeyboardButton,
+    InlineKeyboardMarkup, InlineKeyboardButton,
+    FSInputFile
+)
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
 # Налаштовуємо логування для відстеження роботи бота
