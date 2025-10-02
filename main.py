@@ -3,16 +3,14 @@
 # --- БЛОК 1: ІМПОРТИ ТА НАЛАШТУВАННЯ ---
 import asyncio
 import logging
+import os
+from aiohttp import web
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.fsm.strategy import FSMStrategy
-from aiogram.types import (
-    ReplyKeyboardMarkup, KeyboardButton,
-    InlineKeyboardMarkup, InlineKeyboardButton,
-    FSInputFile
-)
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
 # Налаштовуємо логування для відстеження роботи бота
 logging.basicConfig(level=logging.INFO)
@@ -24,7 +22,8 @@ BOT_TOKEN = "8491104942:AAHR5qea7wy7pLz4QpnC3jPUIZ4gAyi3J0w"
 # ID каналу, отриманий від @userinfobot
 CHANNEL_ID = -1003030288382 
 ADMIN_ID = 715211707
-
+WEB_SERVER_HOST = "https://my-telegram-shop2222.onrender.com"  # Ваше посилання з Render
+WEB_SERVER_PORT = int(os.environ.get('PORT', 8080))
 # --- НОВЕ: Лічильник замовлень ---
 ORDER_COUNTER = 1000
 
@@ -32,6 +31,9 @@ ORDER_COUNTER = 1000
 bot = Bot(token=BOT_TOKEN)
 # Встановлюємо FSMStrategy.CHAT, щоб стани були окремими для кожного чату
 dp = Dispatcher(fsm_strategy=FSMStrategy.CHAT)
+
+WEB_SERVER_HOST = "https://your-app-name.onrender.com" # Ви отримаєте це посилання на Render
+WEB_SERVER_PORT = 8080 # Render використовує цей порт
 
 
 # --- БЛОК 3: ДАНІ (ТОВАРИ, ТЕКСТИ) ---
@@ -446,11 +448,29 @@ async def process_channel_post(message: types.Message):
         del channel_context[CHANNEL_ID]
 
 
-# --- БЛОК 12: ЗАПУСК БОТА ---
+# --- БЛОК 12: ЗАПУСК БОТА НА СЕРВЕРІ (WEBHOOK РЕЖИМ) ---
+async def on_startup(bot: Bot):
+    # Встановлюємо вебхук один раз при старті
+    webhook_url = f"{WEB_SERVER_HOST}/{BOT_TOKEN}"
+    await bot.set_webhook(webhook_url)
+    logging.info(f"Webhook set to {webhook_url}")
+
 async def main():
-    await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
+    dp.startup.register(on_startup)
+
+    app = web.Application()
+    handler = SimpleRequestHandler(dispatcher=dp, bot=bot)
+    handler.register(app, path=f"/{BOT_TOKEN}")
+
+    setup_application(app, dp, bot=bot)
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, port=WEB_SERVER_PORT)
+    await site.start()
+    
+    logging.info(f"Bot started on port {WEB_SERVER_PORT}!")
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
     asyncio.run(main())
-
